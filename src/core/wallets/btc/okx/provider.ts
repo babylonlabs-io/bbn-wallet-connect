@@ -1,5 +1,5 @@
 import { BTCProvider } from "@/core/wallets/btc/BTCProvider";
-import { validateAddress } from "@/core/utils/wallet";
+import { validateNetwork } from "@/core/utils/wallet";
 import type { Fees, InscriptionIdentifier, BTCConfig, UTXO, WalletInfo } from "@/core/types";
 import { Network } from "@/core/types";
 
@@ -34,6 +34,12 @@ export class OKXProvider extends BTCProvider {
   }
 
   connectWallet = async (): Promise<void> => {
+    // Validate the network before connecting
+    try {
+      validateNetwork(this.config.network);
+    } catch (error) {
+      throw new Error((error as Error)?.message);
+    }
     try {
       await this.wallet.enable(); // Connect to OKX Wallet extension
     } catch (error) {
@@ -52,8 +58,6 @@ export class OKXProvider extends BTCProvider {
     }
 
     const { address, compressedPublicKey } = result;
-
-    validateAddress(this.config.network, address);
 
     if (compressedPublicKey && address) {
       this.walletInfo = {
