@@ -31,7 +31,7 @@ export function TermsOfService({ className, onClose, onSubmit }: Props) {
   return (
     <div className={twMerge("b-flex b-flex-1 b-flex-col", className)}>
       <DialogHeader className="b-mb-10" title="Connect Wallets" onClose={onClose}>
-        <Text>Subtitle</Text>
+        <Text>Please read and accept the following terms</Text>
       </DialogHeader>
 
       <DialogBody>
