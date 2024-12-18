@@ -1,5 +1,6 @@
 import { Button, ScrollLocker, Text } from "@babylonlabs-io/bbn-core-ui";
 import type { Meta, StoryObj } from "@storybook/react";
+import { Psbt } from "bitcoinjs-lib";
 import { useEffect, useState } from "react";
 
 import { useChainProviders } from "@/context/Chain.context";
@@ -137,14 +138,15 @@ export const WithBTCSigningFeatures: Story = {
   ],
   render: () => {
     const { open } = useWidgetState();
-    const [messageToSign, setMessageToSign] = useState<string>("");
-    const [psbtToSign, setPsbtToSign] = useState<string>("");
+    const [messageToSign, setMessageToSign] = useState("");
+    const [psbtToSign, setPsbtToSign] = useState("");
     const connectors = useChainProviders();
     const [walletData, setWalletData] = useState<{
       btcWallet?: IBTCProvider;
       signedMessage?: string;
       signedPsbt?: string;
     }>({});
+    const [transaction, setTransaction] = useState("");
 
     useEffect(() => {
       const btcUnsub = connectors.BTC?.on("connect", async (wallet) => {
@@ -236,8 +238,34 @@ export const WithBTCSigningFeatures: Story = {
                     <Text variant="body2" className="b-flex-1 b-truncate">
                       Signed PSBT: {walletData.signedPsbt}
                     </Text>
-                    <Button onClick={() => setWalletData((prev) => ({ ...prev, signedPsbt: undefined }))}>
+                    <Button
+                      onClick={() => {
+                        setTransaction("");
+                        setWalletData((prev) => ({ ...prev, signedPsbt: undefined }));
+                      }}
+                    >
                       Delete
+                    </Button>
+                  </div>
+                )}
+                {walletData.signedPsbt && (
+                  <div className="b-mt-2 b-flex b-items-center b-gap-2">
+                    <Text variant="body2" className="b-flex-1 b-truncate">
+                      Transaction: {transaction}
+                    </Text>
+                    <Button
+                      onClick={() => {
+                        if (!walletData.signedPsbt) return;
+                        try {
+                          const tx = Psbt.fromHex(walletData.signedPsbt).extractTransaction().toHex();
+                          console.log("Extracted transaction:", tx);
+                          setTransaction(tx);
+                        } catch (error) {
+                          console.error("Failed to extract transaction:", error);
+                        }
+                      }}
+                    >
+                      Extract transaction
                     </Button>
                   </div>
                 )}
