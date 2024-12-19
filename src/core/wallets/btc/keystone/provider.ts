@@ -1,20 +1,19 @@
-import * as ecc from "@bitcoin-js/tiny-secp256k1-asmjs";
+import { initBTCCurve } from "@babylonlabs-io/btc-staking-ts";
 import { KeystoneBitcoinSDK, KeystoneSDK, UR } from "@keystonehq/keystone-sdk";
 import { viewSdk as keystoneViewSDK, PlayStatus, ReadStatus, SDK, SupportedResult } from "@keystonehq/sdk";
 import { HDKey } from "@scure/bip32";
 import { PsbtInput } from "bip174/src/lib/interfaces";
-import { Network as BitcoinNetwork, initEccLib, payments, Psbt } from "bitcoinjs-lib";
+import { Network as BitcoinNetwork, payments, Psbt } from "bitcoinjs-lib";
 import { tapleafHash } from "bitcoinjs-lib/src/payments/bip341";
 import { toXOnly } from "bitcoinjs-lib/src/psbt/bip371";
 import { pubkeyInScript } from "bitcoinjs-lib/src/psbt/psbtutils";
+import { Buffer } from "buffer";
 
 import type { BTCConfig, InscriptionIdentifier } from "@/core/types";
 import { IBTCProvider, Network } from "@/core/types";
 import { toNetwork } from "@/core/utils/wallet";
 
 import logo from "./logo.svg";
-
-initEccLib(ecc);
 
 type KeystoneWalletInfo = {
   mfp: string | undefined;
@@ -201,7 +200,6 @@ export class KeystoneProvider implements IBTCProvider {
    * */
   private sign = async (psbtHex: string): Promise<Psbt> => {
     if (!psbtHex) throw new Error("psbt hex is required");
-
     const ur = this.dataSdk.btc.generatePSBT(Buffer.from(psbtHex, "hex"));
 
     // compose the signing process for the Keystone device
@@ -299,10 +297,29 @@ const generateP2trAddressFromXpub = (
   const derivedNode = hdNode.derive(path);
   const pubkeyBuffer = Buffer.from(derivedNode.publicKey!);
   const childNodeXOnlyPubkey = toXOnly(pubkeyBuffer);
-  const { address, output } = payments.p2tr({
-    internalPubkey: childNodeXOnlyPubkey,
-    network,
-  });
+  let address: string;
+  let output: Buffer;
+  try {
+    const res = payments.p2tr({
+      internalPubkey: childNodeXOnlyPubkey,
+      network,
+    });
+    address = res.address!;
+    output = res.output!;
+  } catch (error: Error | any) {
+    if (error instanceof Error && error.message.includes("ECC")) {
+      // initialize the BTC curve if not already initialized
+      initBTCCurve();
+      const res = payments.p2tr({
+        internalPubkey: childNodeXOnlyPubkey,
+        network,
+      });
+      address = res.address!;
+      output = res.output!;
+    } else {
+      throw new Error(error);
+    }
+  }
   return {
     address: address!,
     pubkeyHex: pubkeyBuffer.toString("hex"),

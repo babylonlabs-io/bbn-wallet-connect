@@ -33,8 +33,8 @@
     "@bitcoin-js/tiny-secp256k1-asmjs": "^2.2.3",
     "@cosmjs/stargate": "^0.32.4",
     "@keplr-wallet/types": "^0.12.156",
-    "@keystonehq/animated-qr": "^0.8.6",
-    "@keystonehq/keystone-sdk": "^0.4.1",
+    "@keystonehq/animated-qr": "0.10.0",
+    "@keystonehq/keystone-sdk": "0.9.0",
     "@keystonehq/sdk": "0.22.1",
     "buffer": "^6.0.3",
     "nanoevents": "^9.1.0"
@@ -44,6 +44,7 @@
   ],
   "peerDependencies": {
     "@babylonlabs-io/bbn-core-ui": "^0.6.1",
+    "@babylonlabs-io/btc-staking-ts": "^0.4.0-canary.5",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
     "tailwind-merge": "^2.5.4"
@@ -58,7 +59,6 @@
     "@storybook/react": "^8.4.2",
     "@storybook/react-vite": "^8.4.2",
     "@storybook/test": "^8.4.2",
-    "@types/bitcoinjs-lib": "^5.0.4",
     "@types/react": "^18.3.12",
     "@types/react-dom": "^18.3.1",
     "@vitejs/plugin-react": "^4.3.3",
