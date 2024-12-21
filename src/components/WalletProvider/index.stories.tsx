@@ -60,12 +60,20 @@ export const WithConnectedData: Story = {
           {Object.entries(selectedWallets).map(
             ([chainName, wallet]) =>
               wallet?.account && (
-                <div className="b-rounded b-border b-border-secondary-main/30 b-p-4">
+                <div
+                  className="b-rounded b-border b-border-secondary-main/30 b-p-4"
+                  key={chainName}
+                  data-testid={`${chainName.toLowerCase()}-wallet-section`}
+                >
                   <Text variant="subtitle1" className="b-mb-2">
                     {chainName} Wallet
                   </Text>
-                  <Text variant="body2">Address: {wallet.account.address}</Text>
-                  <Text variant="body2">Public Key: {wallet.account.publicKeyHex}</Text>
+                  <Text variant="body2" data-testid={`${chainName.toLowerCase()}-wallet-address`}>
+                    Address: {wallet.account.address}
+                  </Text>
+                  <Text variant="body2" data-testid={`${chainName.toLowerCase()}-wallet-pubkey`}>
+                    Public Key: {wallet.account.publicKeyHex}
+                  </Text>
                 </div>
               ),
           )}

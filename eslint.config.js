@@ -28,6 +28,7 @@ export default tseslint.config(
     },
     rules: {
       "@typescript-eslint/no-explicit-any": 0,
+      "no-empty-pattern": 0,
       "import/order": [
         "error",
         {
