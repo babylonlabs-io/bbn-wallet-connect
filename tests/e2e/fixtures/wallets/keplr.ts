@@ -1,7 +1,7 @@
 import { BrowserContext } from "@playwright/test";
 
 import { EXTENSION_CHROME_INNER_IDS } from "../../setup/downloadExtensions";
-import { fillInputsByName } from "../../utils/fillInputsByName";
+import { fillInputsByName } from "../../utils/fillInputs";
 import { findServiceWorkerForExtension } from "../../utils/findServiceWorkerForExtension";
 
 export async function setupKeplrWallet(context: BrowserContext, mnemonic: string, password: string) {

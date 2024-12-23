@@ -1,65 +1,68 @@
 import { BrowserContext } from "@playwright/test";
 
 import { EXTENSION_CHROME_INNER_IDS } from "../../setup/downloadExtensions";
+import { fillInputsByPlaceholder } from "../../utils/fillInputs";
 import { findServiceWorkerForExtension } from "../../utils/findServiceWorkerForExtension";
 
 export async function setupOKXWallet(context: BrowserContext, mnemonic: string, password: string) {
-  if (!mnemonic) {
-    throw new Error("Missing E2E_WALLET_MNEMONIC in environment variables");
-  }
-  if (!password) {
-    throw new Error("Missing E2E_WALLET_PASSWORD in environment variables");
-  }
+  if (!mnemonic) throw new Error("Missing E2E_WALLET_MNEMONIC in environment variables");
+  if (!password) throw new Error("Missing E2E_WALLET_PASSWORD in environment variables");
 
+  // Setup extension page
   const okxSW = await findServiceWorkerForExtension(context, EXTENSION_CHROME_INNER_IDS.OKX);
   const okxId = okxSW.url().split("/")[2];
-  const extensionPage = await context.newPage();
-  await extensionPage.goto(`chrome-extension://${okxId}/popup.html`);
+  const page = await context.newPage();
+  await page.goto(`chrome-extension://${okxId}/popup.html`);
 
-  // Start importing wallet
-  await extensionPage.getByText("Import Wallet").click();
-  await extensionPage.getByText("Seed phrase or private key").click();
+  // Initial setup buttons
+  await page.getByText("Import Wallet").click();
+  await page.getByText("Seed phrase or private key").click();
 
-  // Enter mnemonic phrase
+  // Fill mnemonic
   const words = mnemonic.trim().split(" ");
-  // Wait for the mnemonic input container to be visible
-  await extensionPage.waitForSelector(".mnemonic-words-inputs__container");
-  // Fill in each word using the mnemonic-words-inputs__container__input class
+  await page.waitForSelector(".mnemonic-words-inputs__container");
   for (let i = 0; i < words.length; i++) {
-    await extensionPage.locator(".mnemonic-words-inputs__container__input").nth(i).fill(words[i]);
+    await page.locator(".mnemonic-words-inputs__container__input").nth(i).fill(words[i]);
   }
-  await extensionPage.getByTestId("okd-button").click();
-  await extensionPage.getByText("Password", { exact: true }).click();
-  await extensionPage.getByTestId("okd-button").click();
-  await extensionPage.getByPlaceholder("Enter at least 8 characters").click();
-  await extensionPage.getByPlaceholder("Enter at least 8 characters").fill(password);
-  await extensionPage.getByPlaceholder("Re-enter new password").click();
-  await extensionPage.getByPlaceholder("Re-enter new password").fill(password);
-  await extensionPage.getByTestId("okd-button").click();
-  await extensionPage.getByLabel("Set OKX Wallet as the default").uncheck();
-  await extensionPage.getByTestId("okd-button").click();
+  await page.getByTestId("okd-button").click();
 
-  // Manage crypto
-  await extensionPage.getByTestId("okd-button").click();
-  await extensionPage.getByTestId("okd-input").click();
-  await extensionPage.getByTestId("okd-input").fill("sBTC");
-  await extensionPage
+  // Setup password
+  await page.getByText("Password", { exact: true }).click();
+  await page.getByTestId("okd-button").click();
+  await fillInputsByPlaceholder(page, {
+    "Enter at least 8 characters": password,
+    "Re-enter new password": password,
+  });
+  await page.getByTestId("okd-button").click();
+
+  // Complete initial setup
+  await page.getByLabel("Set OKX Wallet as the default").uncheck();
+  await page.getByTestId("okd-button").click();
+
+  // Add sBTC
+  await page.getByTestId("okd-button").click();
+  await page.getByTestId("okd-input").click();
+  await page.getByTestId("okd-input").fill("sBTC");
+
+  // Set up sBTC
+  await page
     .locator("div")
     .filter({ hasText: /^sBTCBTC Signet$/ })
     .first()
     .locator(".icon")
     .click();
-  // Go back
-  await extensionPage.locator(".icon").first().click();
-  // Manage address
-  await extensionPage
+
+  // Navigate back and set default address
+  await page.locator(".icon").first().click();
+  await page
     .locator("div")
     .filter({ hasText: /^sBTC$/ })
     .first()
     .click();
-  await extensionPage.getByTestId("okd-popup").getByText("Set default address").click();
-  await extensionPage.getByText("Taproot").click();
-  // Go back
-  await extensionPage.locator("i").first().click();
-  await extensionPage.close();
+  await page.getByTestId("okd-popup").getByText("Set default address").click();
+  await page.getByText("Taproot").click();
+
+  // Finish setup
+  await page.locator("i").first().click();
+  await page.close();
 }
