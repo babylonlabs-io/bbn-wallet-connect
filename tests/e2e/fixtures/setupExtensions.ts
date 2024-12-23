@@ -59,9 +59,6 @@ export const test = base.extend<ExtensionSetup>({
         }
       }
 
-      // await setupKeplrWallet(newContext, process.env.E2E_WALLET_MNEMONIC!, process.env.E2E_WALLET_PASSWORD!);
-      // await new Promise((resolve) => setTimeout(resolve, 3000));
-      // await setupOKXWallet(newContext, process.env.E2E_WALLET_MNEMONIC!, process.env.E2E_WALLET_PASSWORD!);
       // Setup wallets one at a time
       for (const ext of extensions) {
         try {
