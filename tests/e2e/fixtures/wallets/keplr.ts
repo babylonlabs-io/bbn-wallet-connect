@@ -1,14 +1,8 @@
-import { BrowserContext, Page } from "@playwright/test";
+import { BrowserContext } from "@playwright/test";
 
 import { EXTENSION_CHROME_INNER_IDS } from "../../setup/downloadExtensions";
+import { fillInputsByName } from "../../utils/fillInputsByName";
 import { findServiceWorkerForExtension } from "../../utils/findServiceWorkerForExtension";
-
-async function fillInputsByName(page: Page, inputs: Record<string, string>) {
-  for (const [name, value] of Object.entries(inputs)) {
-    await page.locator(`input[name="${name}"]`).click();
-    await page.locator(`input[name="${name}"]`).fill(value);
-  }
-}
 
 export async function setupKeplrWallet(context: BrowserContext, mnemonic: string, password: string) {
   if (!mnemonic) throw new Error("Missing E2E_WALLET_MNEMONIC in environment variables");
