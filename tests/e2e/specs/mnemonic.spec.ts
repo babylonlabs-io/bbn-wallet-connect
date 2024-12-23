@@ -1,6 +1,6 @@
 import { test } from "../fixtures/setupExtensions";
 
-test.skip("Setup OKX and Keplr wallets", async ({ setupExtensions }) => {
+test("Setup OKX and Keplr wallets", async ({ setupExtensions }) => {
   // Initialize browser context with required wallet extensions
   const { context } = await setupExtensions(["OKX", "KEPLR"]);
 
