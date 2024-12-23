@@ -1,32 +1,10 @@
 # E2E Testing Setup Guide
 
-## Prerequisites
+## Overview
 
-Before running E2E tests, you need to download the required Chrome extensions. The extensions are used to simulate wallet interactions during testing.
+These tests use Playwright to launch a Chromium instance with selected wallet extensions. The required extensions (OKX, Keplr, etc.) download automatically as part of the test setup.
 
-### 1. Download Extensions
-
-Run the following command to download all required extensions:
-
-```bash
-npm run extensions:download
-```
-
-This will:
-
-- Download Chrome extensions from the Chrome Web Store:
-  - OKX Wallet
-  - Keplr Wallet
-  - Bitget Wallet
-  - OneKey Wallet
-- Save them in extensions directory
-- Include version information in filenames (e.g., `mcohilncbfahbmgdjkbpemcciiolgcge_3.34.19.0.crx`)
-- Unzip the extensions
-- Skip downloading if a specific version already exists
-
-### 1. Run E2E Tests
-
-After downloading the extensions, you can run the tests with:
+Use the following command to run the E2E tests:
 
 ```bash
 npm run test:e2e
