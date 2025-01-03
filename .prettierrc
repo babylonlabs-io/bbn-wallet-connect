@@ -8,6 +8,7 @@
   "endOfLine": "lf",
   "singleQuote": false,
   "useTabs": false,
+  "proseWrap": "always",
   "overrides": [
     {
       "files": ["*.ts", "*.tsx"],
@@ -19,6 +20,13 @@
       "files": ["*.js", "*.jsx"],
       "options": {
         "parser": "babel"
+      }
+    },
+    {
+      "files": ["*.md"],
+      "options": {
+        "proseWrap": "always",
+        "printWidth": 80
       }
     }
   ]
