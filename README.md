@@ -215,10 +215,10 @@ export interface IBBNProvider extends IProvider {
    * Retrieves an offline signer that supports both Amino and Direct signing methods.
    * This signer is used for signing transactions offline before broadcasting them to the network.
    *
-   * @returns {Promise<OfflineAminoSigner & OfflineDirectSigner>} A promise that resolves to a signer supporting both Amino and Direct signing
+   * @returns {Promise<OfflineAminoSigner | OfflineDirectSigner>} A promise that resolves to a signer supporting either Amino or Direct signing
    * @throws {Error} If wallet connection is not established or signer cannot be retrieved
    */
-  getOfflineSigner(): Promise<OfflineAminoSigner & OfflineDirectSigner>;
+  getOfflineSigner(): Promise<OfflineAminoSigner | OfflineDirectSigner>;
 }
 ```
 

@@ -91,12 +91,12 @@ export class KeplrProvider implements IBBNProvider {
     return logo;
   }
 
-  async getOfflineSigner(): Promise<OfflineAminoSigner & OfflineDirectSigner> {
+  async getOfflineSigner(): Promise<OfflineAminoSigner | OfflineDirectSigner> {
     if (!this.keplr) throw new Error("Keplr extension not found");
     if (!this.chainId) throw new Error("Chain ID is not initialized");
 
     try {
-      return this.keplr.getOfflineSigner(this.chainId);
+      return this.keplr.getOfflineSignerAuto(this.chainId);
     } catch {
       throw new Error("Failed to get offline signer");
     }

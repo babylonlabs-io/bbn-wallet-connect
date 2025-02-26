@@ -85,12 +85,12 @@ export class OKXBabylonProvider implements IBBNProvider {
     return logo;
   }
 
-  async getOfflineSigner(): Promise<OfflineAminoSigner & OfflineDirectSigner> {
+  async getOfflineSigner(): Promise<OfflineAminoSigner | OfflineDirectSigner> {
     if (!this.wallet.keplr) throw new Error("OKX Wallet extension not found");
     if (!this.chainId) throw new Error("Chain ID is not initialized");
 
     try {
-      return this.wallet.keplr.getOfflineSigner(this.chainId);
+      return this.wallet.keplr.getOfflineSignerAuto(this.chainId);
     } catch {
       throw new Error("Failed to get offline signer");
     }
