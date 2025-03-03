@@ -31,10 +31,26 @@ export class KeplrProvider implements IBBNProvider {
     this.chainData = config.chainData;
   }
 
+  isRealKeplr() {
+    return (
+      typeof this?.keplr?.signEthereum === "function" ||
+      typeof this?.keplr?.sendEthereumTx === "function" ||
+      (this?.keplr?.defaultOptions && typeof this?.keplr?.defaultOptions === "object")
+    );
+  }
+
   async connectWallet(): Promise<void> {
     if (!this.chainId) throw new Error("Chain ID is not initialized");
     if (!this.rpc) throw new Error("RPC URL is not initialized");
     if (!this.keplr) throw new Error("Keplr extension not found");
+
+    const notRealKeplrFlags = ["isBitKeep", "isOneKey", "isOkxWallet"];
+    const keplrHasFlags = notRealKeplrFlags.some((flag) => (this.keplr as any)?.[flag]);
+
+    if (!this.isRealKeplr() || keplrHasFlags) {
+      console.log("not real keplr");
+      throw new Error("Keplr extension not found");
+    }
 
     try {
       await this.keplr.enable(this.chainId);
