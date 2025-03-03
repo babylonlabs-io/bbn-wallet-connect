@@ -1,10 +1,16 @@
 import { type WalletOptions, Wallet } from "./Wallet";
 import { WalletConnector } from "./WalletConnector";
-import { ChainMetadata, ExternalWalletProps, IProvider, Network, WalletMetadata } from "./types";
+import { accountStorage } from "./storage";
+import { ExternalWalletProps, IProvider, Network, WalletConnectorProps, WalletProps } from "./types";
 
 const defaultWalletGetter = (key: string) => (context: any) => context[key];
 
-export const createWallet = async <P extends IProvider, C>(metadata: WalletMetadata<P, C>, context: any, config: C) => {
+export const createWallet = async <P extends IProvider, C>({
+  metadata,
+  context,
+  config,
+  connectedAccount,
+}: WalletProps<P, C>) => {
   const {
     id,
     wallet: walletGetter,
@@ -31,10 +37,10 @@ export const createWallet = async <P extends IProvider, C>(metadata: WalletMetad
     const getWallet = typeof walletGetter === "string" ? defaultWalletGetter(walletGetter) : walletGetter;
 
     options.origin = getWallet(context, config) ?? null;
-    options.provider = options.origin ? createProvider(options.origin, config) : null;
+    options.provider = options.origin ? createProvider(options.origin, config, connectedAccount) : null;
   } else {
     options.origin = null;
-    options.provider = createProvider(null, config);
+    options.provider = createProvider(null, config, connectedAccount);
   }
 
   if (typeof nameGetter === "string") {
@@ -63,16 +69,32 @@ export const createExternalWallet = <P extends IProvider>({ id, name, icon, prov
     provider,
   });
 
-export const createWalletConnector = async <N extends string, P extends IProvider, C>(
-  metadata: ChainMetadata<N, P, C>,
-  context: any,
-  config: C,
-): Promise<WalletConnector<N, P, C>> => {
+export const createWalletConnector = async <N extends string, P extends IProvider, C>({
+  metadata,
+  context,
+  config,
+}: WalletConnectorProps<N, P, C>): Promise<WalletConnector<N, P, C>> => {
   const wallets: Wallet<P>[] = [];
+  const connectedAccount = accountStorage.get(metadata.chain);
 
   for (const walletMetadata of metadata.wallets) {
-    wallets.push(await createWallet(walletMetadata, context, config));
+    const account = connectedAccount?.walletId === walletMetadata.id ? connectedAccount : undefined;
+
+    wallets.push(
+      await createWallet({
+        metadata: walletMetadata,
+        context,
+        config,
+        connectedAccount: account,
+      }),
+    );
   }
 
-  return new WalletConnector(metadata.chain, metadata.name, metadata.icon, wallets, config);
+  const connector = new WalletConnector(metadata.chain, metadata.name, metadata.icon, wallets, config);
+
+  if (connectedAccount) {
+    await connector.connect(connectedAccount.walletId);
+  }
+
+  return connector;
 };

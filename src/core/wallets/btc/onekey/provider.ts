@@ -1,4 +1,4 @@
-import type { BTCConfig, IBTCProvider, InscriptionIdentifier, WalletInfo } from "@/core/types";
+import type { Account, BTCConfig, IBTCProvider, InscriptionIdentifier } from "@/core/types";
 import { Network } from "@/core/types";
 import { validateAddress } from "@/core/utils/wallet";
 
@@ -14,12 +14,12 @@ export const WALLET_PROVIDER_NAME = "OneKey";
 
 export class OneKeyProvider implements IBTCProvider {
   private provider: any;
-  private walletInfo: WalletInfo | undefined;
-  private config: BTCConfig;
 
-  constructor(wallet: any, config: BTCConfig) {
-    this.config = config;
-
+  constructor(
+    wallet: any,
+    private readonly config: BTCConfig,
+    private connectedAccount: Account | null = null,
+  ) {
     // check whether there is an OneKey extension
     if (!wallet?.btcwallet) {
       throw new Error("OneKey Wallet extension not found");
@@ -28,7 +28,7 @@ export class OneKeyProvider implements IBTCProvider {
     this.provider = wallet.btcwallet;
   }
 
-  connectWallet = async (): Promise<void> => {
+  connectWallet = async (): Promise<Account> => {
     try {
       await this.provider.connectWallet();
     } catch (error) {
@@ -45,42 +45,44 @@ export class OneKeyProvider implements IBTCProvider {
     const publicKeyHex = await this.provider.getPublicKeyHex();
 
     if (publicKeyHex && address) {
-      this.walletInfo = {
+      this.connectedAccount = {
         publicKeyHex,
         address,
       };
     } else {
       throw new Error("Could not connect to OneKey Wallet");
     }
+
+    return this.connectedAccount;
   };
 
   getAddress = async (): Promise<string> => {
-    if (!this.walletInfo) throw new Error("OneKey Wallet not connected");
+    if (!this.connectedAccount) throw new Error("OneKey Wallet not connected");
 
-    return this.walletInfo.address;
+    return this.connectedAccount.address;
   };
 
   getPublicKeyHex = async (): Promise<string> => {
-    if (!this.walletInfo) throw new Error("OneKey Wallet not connected");
+    if (!this.connectedAccount) throw new Error("OneKey Wallet not connected");
 
-    return this.walletInfo.publicKeyHex;
+    return this.connectedAccount.publicKeyHex;
   };
 
   signPsbt = async (psbtHex: string): Promise<string> => {
-    if (!this.walletInfo) throw new Error("OneKey Wallet not connected");
+    if (!this.connectedAccount) throw new Error("OneKey Wallet not connected");
     if (!psbtHex) throw new Error("psbt hex is required");
 
     return this.provider.signPsbt(psbtHex);
   };
 
   signPsbts = async (psbtsHexes: string[]): Promise<string[]> => {
-    if (!this.walletInfo) throw new Error("OneKey Wallet not connected");
+    if (!this.connectedAccount) throw new Error("OneKey Wallet not connected");
     if (!psbtsHexes && !Array.isArray(psbtsHexes)) throw new Error("psbts hexes are required");
 
     return this.provider.signPsbts(psbtsHexes);
   };
 
-  getNetwork = async (): Promise<Network> => {
+  getNetwork = async () => {
     const internalNetwork = await this.provider.getNetwork();
 
     for (const [key, value] of Object.entries(INTERNAL_NETWORK_NAMES)) {
@@ -97,14 +99,14 @@ export class OneKeyProvider implements IBTCProvider {
   };
 
   signMessage = async (message: string, type: "ecdsa"): Promise<string> => {
-    if (!this.walletInfo) throw new Error("OneKey Wallet not connected");
+    if (!this.connectedAccount) throw new Error("OneKey Wallet not connected");
 
     return await this.provider.signMessage(message, type);
   };
 
   // Inscriptions are only available on OneKey Wallet BTC mainnet
   getInscriptions = async (): Promise<InscriptionIdentifier[]> => {
-    if (!this.walletInfo) throw new Error("OneKey Wallet not connected");
+    if (!this.connectedAccount) throw new Error("OneKey Wallet not connected");
     if (this.config.network !== Network.MAINNET) {
       throw new Error("Inscriptions are only available on OneKey Wallet BTC Mainnet");
     }
@@ -144,7 +146,7 @@ export class OneKeyProvider implements IBTCProvider {
   };
 
   on = (eventName: string, callBack: () => void) => {
-    if (!this.walletInfo) throw new Error("OneKey Wallet not connected");
+    if (!this.connectedAccount) throw new Error("OneKey Wallet not connected");
 
     // subscribe to account change event
     if (eventName === "accountChanged") {
@@ -153,7 +155,7 @@ export class OneKeyProvider implements IBTCProvider {
   };
 
   off = (eventName: string, callBack: () => void) => {
-    if (!this.walletInfo) throw new Error("OneKey Wallet not connected");
+    if (!this.connectedAccount) throw new Error("OneKey Wallet not connected");
 
     // unsubscribe from account change event
     if (eventName === "accountChanged") {

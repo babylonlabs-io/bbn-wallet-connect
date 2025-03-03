@@ -1,7 +1,7 @@
 import { initBTCCurve } from "@babylonlabs-io/btc-staking-ts";
 import { Psbt, address as btcAddress, networks } from "bitcoinjs-lib";
 
-import type { BTCConfig, IBTCProvider, InscriptionIdentifier, WalletInfo } from "@/core/types";
+import type { Account, BTCConfig, IBTCProvider, InscriptionIdentifier } from "@/core/types";
 import { Network } from "@/core/types";
 import { validateAddress } from "@/core/utils/wallet";
 
@@ -26,10 +26,13 @@ export const WALLET_PROVIDER_NAME = "Unisat";
 // Native Segwit: `m/84'/1'/0'/0`
 export class UnisatProvider implements IBTCProvider {
   private provider: any;
-  private walletInfo: WalletInfo | undefined;
   private config: BTCConfig;
 
-  constructor(wallet: any, config: BTCConfig) {
+  constructor(
+    wallet: any,
+    config: BTCConfig,
+    private connectedAccount: Account | null = null,
+  ) {
     this.config = config;
 
     // check whether there is an Unisat extension
@@ -40,8 +43,9 @@ export class UnisatProvider implements IBTCProvider {
     this.provider = wallet;
   }
 
-  connectWallet = async (): Promise<void> => {
+  connectWallet = async (): Promise<Account> => {
     let accounts;
+
     try {
       accounts = await this.provider.requestAccounts();
     } catch (error) {
@@ -58,29 +62,31 @@ export class UnisatProvider implements IBTCProvider {
     const publicKeyHex = await this.provider.getPublicKey();
 
     if (publicKeyHex && address) {
-      this.walletInfo = {
+      this.connectedAccount = {
         publicKeyHex,
         address,
       };
     } else {
       throw new Error("Could not connect to Unisat Wallet");
     }
+
+    return this.connectedAccount;
   };
 
   getAddress = async (): Promise<string> => {
-    if (!this.walletInfo) throw new Error("Unisat Wallet not connected");
+    if (!this.connectedAccount) throw new Error("Unisat Wallet not connected");
 
-    return this.walletInfo.address;
+    return this.connectedAccount.address;
   };
 
   getPublicKeyHex = async (): Promise<string> => {
-    if (!this.walletInfo) throw new Error("Unisat Wallet not connected");
+    if (!this.connectedAccount) throw new Error("Unisat Wallet not connected");
 
-    return this.walletInfo.publicKeyHex;
+    return this.connectedAccount.publicKeyHex;
   };
 
   signPsbt = async (psbtHex: string): Promise<string> => {
-    if (!this.walletInfo) throw new Error("Unisat Wallet not connected");
+    if (!this.connectedAccount) throw new Error("Unisat Wallet not connected");
     if (!psbtHex) throw new Error("psbt hex is required");
 
     const network = await this.getNetwork();
@@ -93,7 +99,7 @@ export class UnisatProvider implements IBTCProvider {
   };
 
   signPsbts = async (psbtsHexes: string[]): Promise<string[]> => {
-    if (!this.walletInfo) throw new Error("Unisat Wallet not connected");
+    if (!this.connectedAccount) throw new Error("Unisat Wallet not connected");
     if (!psbtsHexes && !Array.isArray(psbtsHexes)) throw new Error("psbts hexes are required");
 
     const network = await this.getNetwork();
@@ -134,7 +140,7 @@ export class UnisatProvider implements IBTCProvider {
         // check if the address is a taproot address
         const isTaproot = addressToBeSigned.indexOf("tb1p") === 0 || addressToBeSigned.indexOf("bc1p") === 0;
         // check if the address is the same as the wallet address
-        const isWalletAddress = addressToBeSigned === this.walletInfo?.address;
+        const isWalletAddress = addressToBeSigned === this.connectedAccount?.address;
         // tweak the signer if needed
         if (isTaproot && isWalletAddress) {
           useTweakedSigner = true;
@@ -146,7 +152,7 @@ export class UnisatProvider implements IBTCProvider {
       if (!signed) {
         toSignInputs.push({
           index,
-          publicKey: this.walletInfo?.publicKeyHex,
+          publicKey: this.connectedAccount?.publicKeyHex,
           sighashTypes: undefined,
           useTweakedSigner,
         });
@@ -176,13 +182,13 @@ export class UnisatProvider implements IBTCProvider {
   };
 
   signMessage = async (message: string, type: "ecdsa"): Promise<string> => {
-    if (!this.walletInfo) throw new Error("Unisat Wallet not connected");
+    if (!this.connectedAccount) throw new Error("Unisat Wallet not connected");
 
     return await this.provider.signMessage(message, type);
   };
 
   getInscriptions = async (): Promise<InscriptionIdentifier[]> => {
-    if (!this.walletInfo) throw new Error("Unisat Wallet not connected");
+    if (!this.connectedAccount) throw new Error("Unisat Wallet not connected");
     if (this.config.network !== Network.MAINNET) {
       throw new Error("Inscriptions are only available on Unisat Wallet BTC Mainnet");
     }
@@ -222,7 +228,7 @@ export class UnisatProvider implements IBTCProvider {
   };
 
   on = (eventName: string, callBack: () => void) => {
-    if (!this.walletInfo) throw new Error("Unisat Wallet not connected");
+    if (!this.connectedAccount) throw new Error("Unisat Wallet not connected");
 
     // subscribe to account change event: `accountChanged` -> `accountsChanged`
     if (eventName === "accountChanged") {
@@ -231,7 +237,7 @@ export class UnisatProvider implements IBTCProvider {
   };
 
   off = (eventName: string, callBack: () => void) => {
-    if (!this.walletInfo) throw new Error("Unisat Wallet not connected");
+    if (!this.connectedAccount) throw new Error("Unisat Wallet not connected");
 
     // unsubscribe from account change event: `accountChanged` -> `accountsChanged`
     if (eventName === "accountChanged") {

@@ -46,12 +46,14 @@ export class Wallet<P extends IProvider> implements IWallet {
       throw Error("Provider not found");
     }
 
-    await this.provider.connectWallet();
-    const [address, publicKeyHex] = await Promise.all([this.provider.getAddress(), this.provider.getPublicKeyHex()]);
+    const account = await this.provider.connectWallet();
+    this.account = account
+      ? account
+      : await Promise.all([this.provider.getAddress(), this.provider.getPublicKeyHex()]).then(
+          ([address, publicKeyHex]) => ({ address, publicKeyHex }),
+        );
 
-    this.account = { address, publicKeyHex };
-
-    return this;
+    return this.account;
   }
 
   clone() {
