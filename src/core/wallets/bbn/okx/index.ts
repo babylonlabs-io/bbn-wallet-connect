@@ -9,7 +9,7 @@ const metadata: WalletMetadata<IBBNProvider, BBNConfig> = {
   icon: logo,
   docs: "https://www.okx.com/web3",
   wallet: "okxwallet",
-  createProvider: (wallet, config) => new OKXBabylonProvider(wallet, config),
+  createProvider: (wallet, config, account) => new OKXBabylonProvider(wallet, config, account),
   networks: [Network.MAINNET, Network.SIGNET],
 };
 

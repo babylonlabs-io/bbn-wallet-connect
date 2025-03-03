@@ -45,7 +45,13 @@ export function ChainProvider({ children, context, config, onError }: PropsWithC
   const init = useCallback(async () => {
     const connectorPromises = config
       .filter((c) => metadata[c.chain])
-      .map(({ chain, config }) => createWalletConnector<string, IProvider, any>(metadata[chain], context, config));
+      .map(({ chain, config }) =>
+        createWalletConnector<string, IProvider, any>({
+          metadata: metadata[chain],
+          context,
+          config,
+        }),
+      );
     const connectorArr = await Promise.all(connectorPromises);
 
     return connectorArr.reduce((acc, connector) => ({ ...acc, [connector.id]: connector }), {} as Connectors);

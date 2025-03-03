@@ -9,7 +9,7 @@ const metadata: WalletMetadata<IBBNProvider, BBNConfig> = {
   icon: logo,
   docs: "https://www.leapwallet.io/",
   wallet: "leap",
-  createProvider: (wallet, config) => new LeapProvider(wallet, config),
+  createProvider: (wallet, config, account) => new LeapProvider(wallet, config, account),
   networks: [Network.MAINNET, Network.SIGNET],
 };
 

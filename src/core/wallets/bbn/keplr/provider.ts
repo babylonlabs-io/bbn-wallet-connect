@@ -2,7 +2,7 @@ import { Window as KeplrWindow } from "@keplr-wallet/types";
 import { OfflineAminoSigner, OfflineDirectSigner } from "@keplr-wallet/types/src/cosmjs";
 import { Buffer } from "buffer";
 
-import { BBNConfig, IBBNProvider, WalletInfo } from "@/core/types";
+import { Account, BBNConfig, IBBNProvider } from "@/core/types";
 
 import logo from "./logo.svg";
 
@@ -14,7 +14,6 @@ declare global {
 export const WALLET_PROVIDER_NAME = "Keplr";
 
 export class KeplrProvider implements IBBNProvider {
-  private walletInfo: WalletInfo | undefined;
   private chainId: string | undefined;
   private rpc: string | undefined;
   private chainData: BBNConfig["chainData"];
@@ -22,6 +21,7 @@ export class KeplrProvider implements IBBNProvider {
   constructor(
     private keplr: Window["keplr"],
     config: BBNConfig,
+    private connectedAccount: Account | null = null,
   ) {
     if (!keplr) {
       throw new Error("Keplr extension not found");
@@ -31,7 +31,7 @@ export class KeplrProvider implements IBBNProvider {
     this.chainData = config.chainData;
   }
 
-  async connectWallet(): Promise<void> {
+  async connectWallet(): Promise<Account> {
     if (!this.chainId) throw new Error("Chain ID is not initialized");
     if (!this.rpc) throw new Error("RPC URL is not initialized");
     if (!this.keplr) throw new Error("Keplr extension not found");
@@ -64,23 +64,25 @@ export class KeplrProvider implements IBBNProvider {
     const { bech32Address, pubKey } = key;
 
     if (bech32Address && pubKey) {
-      this.walletInfo = {
+      this.connectedAccount = {
         publicKeyHex: Buffer.from(key.pubKey).toString("hex"),
         address: bech32Address,
       };
     } else {
       throw new Error("Could not connect to Keplr");
     }
+
+    return this.connectedAccount;
   }
 
   async getAddress(): Promise<string> {
-    if (!this.walletInfo) throw new Error("Wallet not connected");
-    return this.walletInfo.address;
+    if (!this.connectedAccount) throw new Error("Wallet not connected");
+    return this.connectedAccount.address;
   }
 
   async getPublicKeyHex(): Promise<string> {
-    if (!this.walletInfo) throw new Error("Wallet not connected");
-    return this.walletInfo.publicKeyHex;
+    if (!this.connectedAccount) throw new Error("Wallet not connected");
+    return this.connectedAccount.publicKeyHex;
   }
 
   async getWalletProviderName(): Promise<string> {

@@ -9,7 +9,7 @@ const metadata: WalletMetadata<IBBNProvider, BBNConfig> = {
   icon: logo,
   docs: "https://www.keplr.app/",
   wallet: "keplr",
-  createProvider: (wallet, config) => new KeplrProvider(wallet, config),
+  createProvider: (wallet, config, account) => new KeplrProvider(wallet, config, account),
   networks: [Network.MAINNET, Network.SIGNET],
 };
 

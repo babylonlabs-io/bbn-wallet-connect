@@ -64,9 +64,9 @@ export type BBNConfig = {
 };
 
 export interface IProvider {
-  connectWallet: () => Promise<void>;
-  getAddress: () => Promise<string>;
-  getPublicKeyHex: () => Promise<string>;
+  connectWallet(): Promise<Account>;
+  getAddress(): Promise<string>;
+  getPublicKeyHex(): Promise<string>;
 }
 
 export interface IWallet<P extends IProvider = IProvider> {
@@ -100,7 +100,7 @@ export interface Account {
   publicKeyHex: string;
 }
 
-export interface WalletMetadata<P extends IProvider, C> {
+export interface WalletMetadata<P extends IProvider, C, CA extends Account = Account> {
   id: string;
   wallet?: string | ((context: any, config: C) => any);
   label?: string;
@@ -108,7 +108,7 @@ export interface WalletMetadata<P extends IProvider, C> {
   icon: string | ((wallet: any, config: C) => Promise<string>);
   docs: string;
   networks: Network[];
-  createProvider: (wallet: any, config: C) => P;
+  createProvider: (wallet: any, config: C, account?: CA | null) => P;
 }
 
 export interface ChainMetadata<N extends string, P extends IProvider, C> {
@@ -123,6 +123,18 @@ export interface ExternalWalletProps<P extends IProvider> {
   name: string;
   icon: string;
   provider: P;
+}
+export interface WalletConnectorProps<N extends string, P extends IProvider, C> {
+  metadata: ChainMetadata<N, P, C>;
+  context: any;
+  config: C;
+}
+
+export interface WalletProps<P extends IProvider, C> {
+  metadata: WalletMetadata<P, C>;
+  context: any;
+  config: C;
+  connectedAccount?: Account;
 }
 
 export interface WidgetProps<P extends IProvider = IProvider> {
@@ -139,26 +151,6 @@ export interface ExternalConnector<P extends IProvider = IProvider> {
 }
 
 export interface IBTCProvider extends IProvider {
-  /**
-   * Connects to the wallet and returns the instance of the wallet provider.
-   * Currently only supports "native segwit" and "taproot" address types.
-   * @returns A promise that resolves to an instance of the wrapper wallet provider in babylon friendly format.
-   * @throws An error if the wallet is not installed or if connection fails.
-   */
-  connectWallet(): Promise<void>;
-
-  /**
-   * Gets the address of the connected wallet.
-   * @returns A promise that resolves to the address of the connected wallet.
-   */
-  getAddress(): Promise<string>;
-
-  /**
-   * Gets the public key of the connected wallet.
-   * @returns A promise that resolves to the public key of the connected wallet.
-   */
-  getPublicKeyHex(): Promise<string>;
-
   /**
    * Signs the given PSBT in hex format.
    * @param psbtHex - The hex string of the unsigned PSBT to sign.
@@ -223,25 +215,6 @@ export interface IBTCProvider extends IProvider {
 
 export interface IBBNProvider extends IProvider {
   /**
-   * Connects to the wallet and returns the instance of the wallet provider.
-   * @returns A promise that resolves to an instance of the wrapper wallet provider.
-   * @throws An error if the wallet is not installed or if connection fails.
-   */
-  connectWallet(): Promise<void>;
-
-  /**
-   * Gets the address of the connected wallet.
-   * @returns A promise that resolves to the address of the connected wallet.
-   */
-  getAddress(): Promise<string>;
-
-  /**
-   * Gets the public key of the connected wallet.
-   * @returns A promise that resolves to the public key of the connected wallet.
-   */
-  getPublicKeyHex(): Promise<string>;
-
-  /**
    * Gets the name of the wallet provider.
    * @returns A promise that resolves to the name of the wallet provider.
    */
@@ -261,4 +234,11 @@ export interface IBBNProvider extends IProvider {
    * @throws {Error} If wallet connection is not established or signer cannot be retrieved
    */
   getOfflineSigner(): Promise<OfflineAminoSigner & OfflineDirectSigner>;
+}
+
+export interface HashMap {
+  get: (key: string) => any;
+  set: (key: string, value: any) => void;
+  has: (key: string) => boolean;
+  delete: (key: string) => boolean;
 }

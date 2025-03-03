@@ -18,11 +18,11 @@ interface WalletDialogProps {
 const ANIMATION_DELAY = 1000;
 
 export function WalletDialog({ config, onError }: WalletDialogProps) {
-  const { visible, screen, close, confirm, displayChains } = useWidgetState();
+  const { visible, screen, confirmed, close, confirm, displayChains } = useWidgetState();
   const { toggleShowAgain, toggleLockInscriptions } = useInscriptionProvider();
   const connectors = useChainProviders();
   const walletWidgets = useWalletWidgets(connectors, config);
-  const { connect, disconnect } = useWalletConnectors(onError);
+  const { connect, disconnect } = useWalletConnectors({ onError });
   const { disconnect: disconnectAll } = useWalletConnect();
 
   const handleToggleInscriptions = useCallback(
@@ -36,8 +36,10 @@ export function WalletDialog({ config, onError }: WalletDialogProps) {
 
   const handleClose = useCallback(() => {
     close?.();
-    setTimeout(disconnectAll, ANIMATION_DELAY);
-  }, [close, disconnectAll]);
+    if (!confirmed) {
+      setTimeout(disconnectAll, ANIMATION_DELAY);
+    }
+  }, [close, disconnectAll, confirmed]);
 
   const handleConfirm = useCallback(() => {
     confirm?.();

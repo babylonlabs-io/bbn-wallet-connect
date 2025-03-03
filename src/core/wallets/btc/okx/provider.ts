@@ -1,4 +1,4 @@
-import type { BTCConfig, InscriptionIdentifier, WalletInfo } from "@/core/types";
+import type { Account, BTCConfig, InscriptionIdentifier } from "@/core/types";
 import { IBTCProvider, Network } from "@/core/types";
 import { validateAddress } from "@/core/utils/wallet";
 
@@ -15,15 +15,12 @@ export const WALLET_PROVIDER_NAME = "OKX";
 
 export class OKXProvider implements IBTCProvider {
   private provider: any;
-  private walletInfo: WalletInfo | undefined;
-  private config: BTCConfig;
 
   constructor(
     private wallet: any,
-    config: BTCConfig,
+    private readonly config: BTCConfig,
+    private connectedAccount: Account | null = null,
   ) {
-    this.config = config;
-
     // check whether there is an OKX Wallet extension
     if (!wallet) {
       throw new Error("OKX Wallet extension not found");
@@ -38,7 +35,7 @@ export class OKXProvider implements IBTCProvider {
     this.provider = wallet[providerName];
   }
 
-  connectWallet = async (): Promise<void> => {
+  connectWallet = async (): Promise<Account> => {
     try {
       await this.wallet.enable(); // Connect to OKX Wallet extension
     } catch (error) {
@@ -61,35 +58,37 @@ export class OKXProvider implements IBTCProvider {
     validateAddress(this.config.network, address);
 
     if (compressedPublicKey && address) {
-      this.walletInfo = {
+      this.connectedAccount = {
         publicKeyHex: compressedPublicKey,
         address,
       };
     } else {
       throw new Error("Could not connect to OKX Wallet");
     }
+
+    return this.connectedAccount;
   };
 
   getAddress = async (): Promise<string> => {
-    if (!this.walletInfo) throw new Error("OKX Wallet not connected");
+    if (!this.connectedAccount) throw new Error("OKX Wallet not connected");
 
-    return this.walletInfo.address;
+    return this.provider.getAddress();
   };
 
   getPublicKeyHex = async (): Promise<string> => {
-    if (!this.walletInfo) throw new Error("OKX Wallet not connected");
+    if (!this.connectedAccount) throw new Error("OKX Wallet not connected");
 
-    return this.walletInfo.publicKeyHex;
+    return this.provider.getPublicKey();
   };
 
   signPsbt = async (psbtHex: string): Promise<string> => {
-    if (!this.walletInfo) throw new Error("OKX Wallet not connected");
+    if (!this.connectedAccount) throw new Error("OKX Wallet not connected");
 
     return await this.provider.signPsbt(psbtHex);
   };
 
   signPsbts = async (psbtsHexes: string[]): Promise<string[]> => {
-    if (!this.walletInfo) throw new Error("OKX Wallet not connected");
+    if (!this.connectedAccount) throw new Error("OKX Wallet not connected");
 
     return await this.provider.signPsbts(psbtsHexes);
   };
@@ -103,14 +102,14 @@ export class OKXProvider implements IBTCProvider {
   };
 
   signMessage = async (message: string, type: "ecdsa"): Promise<string> => {
-    if (!this.walletInfo) throw new Error("OKX Wallet not connected");
+    if (!this.connectedAccount) throw new Error("OKX Wallet not connected");
 
     return await this.provider.signMessage(message, type);
   };
 
   // Inscriptions are only available on OKX Wallet BTC mainnet (i.e okxWallet.bitcoin)
   getInscriptions = async (): Promise<InscriptionIdentifier[]> => {
-    if (!this.walletInfo) throw new Error("OKX Wallet not connected");
+    if (!this.connectedAccount) throw new Error("OKX Wallet not connected");
     if (this.config.network !== Network.MAINNET) {
       throw new Error("Inscriptions are only available on OKX Wallet BTC mainnet");
     }
@@ -150,7 +149,7 @@ export class OKXProvider implements IBTCProvider {
   };
 
   on = (eventName: string, callBack: () => void) => {
-    if (!this.walletInfo) throw new Error("OKX Wallet not connected");
+    if (!this.connectedAccount) throw new Error("OKX Wallet not connected");
 
     // subscribe to account change event
     if (eventName === "accountChanged") {
@@ -159,7 +158,7 @@ export class OKXProvider implements IBTCProvider {
   };
 
   off = (eventName: string, callBack: () => void) => {
-    if (!this.walletInfo) throw new Error("OKX Wallet not connected");
+    if (!this.connectedAccount) throw new Error("OKX Wallet not connected");
 
     // unsubscribe from account change event
     if (eventName === "accountChanged") {
