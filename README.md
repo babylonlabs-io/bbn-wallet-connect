@@ -89,14 +89,13 @@ Full interface definitions can be found in
 Below we outline the interfaces for Bitcoin and Babylon wallets that need to be
 implemented for integration with the Babylon staking app.
 
-#### IBTCProvider
+### IProvider
 
 ```ts
-interface IBTCProvider extends IProvider {
+export interface IProvider {
   /**
    * Connects to the wallet and returns the instance of the wallet provider.
-   * Currently only supports "native segwit" and "taproot" address types.
-   * @returns A promise that resolves to an instance of the wrapper wallet provider in babylon friendly format.
+   * @returns A promise that resolves to an instance of the wrapper wallet provider.
    * @throws An error if the wallet is not installed or if connection fails.
    */
   connectWallet(): Promise<void>;
@@ -112,7 +111,13 @@ interface IBTCProvider extends IProvider {
    * @returns A promise that resolves to the public key of the connected wallet.
    */
   getPublicKeyHex(): Promise<string>;
+}
+```
 
+#### IBTCProvider
+
+```ts
+interface IBTCProvider extends IProvider {
   /**
    * Signs the given PSBT in hex format.
    * @param psbtHex - The hex string of the unsigned PSBT to sign.
@@ -180,25 +185,6 @@ interface IBTCProvider extends IProvider {
 
 ```ts
 export interface IBBNProvider extends IProvider {
-  /**
-   * Connects to the wallet and returns the instance of the wallet provider.
-   * @returns A promise that resolves to an instance of the wrapper wallet provider.
-   * @throws An error if the wallet is not installed or if connection fails.
-   */
-  connectWallet(): Promise<void>;
-
-  /**
-   * Gets the address of the connected wallet.
-   * @returns A promise that resolves to the address of the connected wallet.
-   */
-  getAddress(): Promise<string>;
-
-  /**
-   * Gets the public key of the connected wallet.
-   * @returns A promise that resolves to the public key of the connected wallet.
-   */
-  getPublicKeyHex(): Promise<string>;
-
   /**
    * Gets the name of the wallet provider.
    * @returns A promise that resolves to the name of the wallet provider.

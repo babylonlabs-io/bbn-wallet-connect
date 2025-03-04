@@ -2,6 +2,11 @@ import type { HashMap } from "./types";
 
 const CONNECTED_ACCOUNTS_KEY = "baby-connected-wallet-accounts";
 
+/**
+ * Factory method instantiates an instance of persistent key value storage with predefined ttl value
+ * @param ttl - time to live in ms
+ * @returns - key value storage
+ */
 export const createAccountStorage: (ttl: number) => HashMap = (ttl) => ({
   get: (key: string) => {
     const map = localStorage.getItem(CONNECTED_ACCOUNTS_KEY)
