@@ -2,14 +2,19 @@ import { useCallback, useEffect } from "react";
 
 import { useChainProviders } from "@/context/Chain.context";
 import { useInscriptionProvider } from "@/context/Inscriptions.context";
+import { accountStorage } from "@/core/storage";
 import { IChain, IWallet } from "@/core/types";
 import { validateAddressWithPK } from "@/core/utils/wallet";
 
 import { useWidgetState } from "./useWidgetState";
 
-export function useWalletConnectors(onError?: (e: Error) => void) {
+interface Props {
+  onError?: (e: Error) => void;
+}
+
+export function useWalletConnectors({ onError }: Props) {
   const connectors = useChainProviders();
-  const { selectWallet, removeWallet, displayLoader, displayChains, displayInscriptions, displayError } =
+  const { selectWallet, removeWallet, displayLoader, displayChains, displayInscriptions, displayError, confirm } =
     useWidgetState();
   const { showAgain } = useInscriptionProvider();
 
@@ -28,12 +33,13 @@ export function useWalletConnectors(onError?: (e: Error) => void) {
 
   // Connect Event
   useEffect(() => {
-    const connectorArr = Object.values(connectors);
+    const connectorArr = Object.values(connectors).filter(Boolean);
 
     const handlers: Record<string, (connector: any) => (connectedWallet: IWallet) => void> = {
       BTC: (connector) => (connectedWallet) => {
         if (connectedWallet) {
           selectWallet?.("BTC", connectedWallet);
+          accountStorage.set(connector.id, connectedWallet.id);
         }
 
         const goToNextScreen = () => void (showAgain ? displayInscriptions?.() : displayChains?.());
@@ -62,15 +68,20 @@ export function useWalletConnectors(onError?: (e: Error) => void) {
       BBN: (connector) => (connectedWallet) => {
         if (connectedWallet) {
           selectWallet?.(connector.id, connectedWallet);
+          accountStorage.set(connector.id, connectedWallet.id);
         }
 
         displayChains?.();
       },
     };
 
-    const unsubscribeArr = connectorArr
-      .filter(Boolean)
-      .map((connector) => connector.on("connect", handlers[connector.id]?.(connector)));
+    const unsubscribeArr = connectorArr.map((connector) =>
+      connector.on("connect", handlers[connector.id]?.(connector)),
+    );
+
+    connectorArr.forEach((connector) => {
+      selectWallet?.(connector.id, connector.connectedWallet);
+    });
 
     return () => unsubscribeArr.forEach((unsubscribe) => unsubscribe());
   }, [selectWallet, removeWallet, displayInscriptions, displayChains, connectors, showAgain]);
@@ -84,6 +95,7 @@ export function useWalletConnectors(onError?: (e: Error) => void) {
         if (connectedWallet) {
           removeWallet?.(connector.id);
           displayChains?.();
+          accountStorage.delete(connector.id);
         }
       }),
     );
@@ -105,12 +117,21 @@ export function useWalletConnectors(onError?: (e: Error) => void) {
     return () => unsubscribeArr.forEach((unsubscribe) => unsubscribe());
   }, [onError, displayChains, connectors]);
 
+  useEffect(() => {
+    const connectorArr = Object.values(connectors).filter(Boolean);
+
+    if (connectorArr.length && connectorArr.every((connector) => accountStorage.has(connector.id))) {
+      confirm?.();
+      displayChains?.();
+    }
+  }, [connectors, confirm, displayChains]);
+
   const connect = useCallback(
     async (chain: IChain, wallet: IWallet) => {
       const connector = connectors[chain.id as keyof typeof connectors];
       await connector?.connect(wallet.id);
     },
-    [displayLoader, displayInscriptions, connectors, showAgain],
+    [connectors],
   );
 
   const disconnect = useCallback(
@@ -118,7 +139,7 @@ export function useWalletConnectors(onError?: (e: Error) => void) {
       const connector = connectors[chainId as keyof typeof connectors];
       await connector?.disconnect();
     },
-    [displayLoader, displayChains, connectors],
+    [connectors],
   );
 
   return { connect, disconnect };
