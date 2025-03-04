@@ -1,8 +1,12 @@
 import { type PropsWithChildren } from "react";
 
 import { ChainConfigArr, ChainProvider } from "@/context/Chain.context";
+import { createAccountStorage } from "@/core/storage";
 
 import { WalletDialog } from "./components/WalletDialog";
+import { ONE_HOUR } from "./constants";
+
+const storage = createAccountStorage(ONE_HOUR);
 
 interface WalletProviderProps {
   context?: any;
@@ -17,9 +21,9 @@ export function WalletProvider({
   onError,
 }: PropsWithChildren<WalletProviderProps>) {
   return (
-    <ChainProvider context={context} config={config} onError={onError}>
+    <ChainProvider storage={storage} context={context} config={config} onError={onError}>
       {children}
-      <WalletDialog config={config} onError={onError} />
+      <WalletDialog storage={storage} config={config} onError={onError} />
     </ChainProvider>
   );
 }
