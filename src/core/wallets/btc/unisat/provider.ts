@@ -175,7 +175,7 @@ export class UnisatProvider implements IBTCProvider {
     }
   };
 
-  signMessage = async (message: string, type: "ecdsa"): Promise<string> => {
+  signMessage = async (message: string, type: "bip322-simple" | "ecdsa"): Promise<string> => {
     if (!this.walletInfo) throw new Error("Unisat Wallet not connected");
 
     return await this.provider.signMessage(message, type);

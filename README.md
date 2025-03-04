@@ -134,12 +134,15 @@ interface IBTCProvider extends IProvider {
   getNetwork(): Promise<Network>;
 
   /**
-   * Signs a message using the specified signing method.
+   * Signs a message using either BIP322-Simple or ECDSA signing method.
    * @param message - The message to sign.
    * @param type - The signing method to use.
    * @returns A promise that resolves to the signed message.
    */
-  signMessage(message: string, type: "ecdsa"): Promise<string>;
+  signMessage(
+    message: string,
+    type: "bip322-simple" | "ecdsa",
+  ): Promise<string>;
 
   /**
    * Retrieves the inscriptions for the connected wallet.
