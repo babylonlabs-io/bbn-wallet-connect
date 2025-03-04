@@ -6,6 +6,8 @@ import { Network } from "@/core/types";
 
 import { BBN_TESTNET_RPC_URL, bbnTestnet } from "./tesnet";
 
+export const ONE_HOUR = 60 * 60 * 1000;
+
 export const config: ChainConfigArr = [
   {
     chain: "BTC",

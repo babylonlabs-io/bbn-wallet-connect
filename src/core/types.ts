@@ -128,6 +128,7 @@ export interface WalletConnectorProps<N extends string, P extends IProvider, C> 
   metadata: ChainMetadata<N, P, C>;
   context: any;
   config: C;
+  accountStorage: HashMap;
 }
 
 export interface WalletProps<P extends IProvider, C> {
@@ -236,7 +237,7 @@ export interface IBBNProvider extends IProvider {
 }
 
 export interface HashMap {
-  get: (key: string) => any;
+  get: (key: string) => string | undefined;
   set: (key: string, value: any) => void;
   has: (key: string) => boolean;
   delete: (key: string) => boolean;

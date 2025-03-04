@@ -2,17 +2,17 @@ import { useCallback, useEffect } from "react";
 
 import { useChainProviders } from "@/context/Chain.context";
 import { useInscriptionProvider } from "@/context/Inscriptions.context";
-import { accountStorage } from "@/core/storage";
-import { IChain, IWallet } from "@/core/types";
+import { HashMap, IChain, IWallet } from "@/core/types";
 import { validateAddressWithPK } from "@/core/utils/wallet";
 
 import { useWidgetState } from "./useWidgetState";
 
 interface Props {
+  accountStorage: HashMap;
   onError?: (e: Error) => void;
 }
 
-export function useWalletConnectors({ onError }: Props) {
+export function useWalletConnectors({ accountStorage, onError }: Props) {
   const connectors = useChainProviders();
   const { selectWallet, removeWallet, displayLoader, displayChains, displayInscriptions, displayError, confirm } =
     useWidgetState();

@@ -1,6 +1,5 @@
 import { type WalletOptions, Wallet } from "./Wallet";
 import { WalletConnector } from "./WalletConnector";
-import { accountStorage } from "./storage";
 import { ExternalWalletProps, IProvider, Network, WalletConnectorProps, WalletProps } from "./types";
 
 const defaultWalletGetter = (key: string) => (context: any) => context[key];
@@ -68,6 +67,7 @@ export const createWalletConnector = async <N extends string, P extends IProvide
   metadata,
   context,
   config,
+  accountStorage,
 }: WalletConnectorProps<N, P, C>): Promise<WalletConnector<N, P, C>> => {
   const wallets: Wallet<P>[] = [];
   const connectedWalletId = accountStorage.get(metadata.chain);
