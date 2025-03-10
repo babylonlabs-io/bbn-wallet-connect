@@ -1,6 +1,7 @@
 import { type WalletOptions, Wallet } from "./Wallet";
 import { WalletConnector } from "./WalletConnector";
 import { ExternalWalletProps, IProvider, Network, WalletConnectorProps, WalletProps } from "./types";
+import { shouldShowInjectableWallets } from "./utils/device";
 
 const defaultWalletGetter = (key: string) => (context: any) => context[key];
 
@@ -73,7 +74,13 @@ export const createWalletConnector = async <N extends string, P extends IProvide
   const wallets: Wallet<P>[] = [];
   const connectedWalletId = persistent ? accountStorage.get(metadata.chain) : undefined;
 
+  const showInjectable = shouldShowInjectableWallets();
+
   for (const walletMetadata of metadata.wallets) {
+    if (!showInjectable && walletMetadata.id === "injectable") {
+      continue;
+    }
+
     wallets.push(
       await createWallet({
         metadata: walletMetadata,
@@ -85,7 +92,7 @@ export const createWalletConnector = async <N extends string, P extends IProvide
 
   const connector = new WalletConnector(metadata.chain, metadata.name, metadata.icon, wallets, config);
 
-  if (connectedWalletId) {
+  if (connectedWalletId && wallets.some((wallet) => wallet.id === connectedWalletId)) {
     await connector.connect(connectedWalletId);
   }
 
