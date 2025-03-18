@@ -29,7 +29,7 @@ type KeystoneWalletInfo = {
 export const WALLET_PROVIDER_NAME = "Keystone";
 
 export class KeystoneProvider implements IBTCProvider {
-  private keystoneWaleltInfo: KeystoneWalletInfo | undefined;
+  private keystoneWalletInfo: KeystoneWalletInfo | undefined;
   private viewSDK: typeof keystoneViewSDK;
   private dataSdk: KeystoneSDK;
   private config: BTCConfig;
@@ -83,7 +83,7 @@ export class KeystoneProvider implements IBTCProvider {
     const P2TRINDEX = 3;
     const xpub = accountData.keys[P2TRINDEX].extendedPublicKey;
 
-    this.keystoneWaleltInfo = {
+    this.keystoneWalletInfo = {
       mfp: accountData.masterFingerprint,
       extendedPublicKey: xpub,
       path: accountData.keys[P2TRINDEX].path,
@@ -92,33 +92,36 @@ export class KeystoneProvider implements IBTCProvider {
       scriptPubKeyHex: undefined,
     };
 
-    if (!this.keystoneWaleltInfo.extendedPublicKey) throw new Error("Could not retrieve the extended public key");
+    if (!this.keystoneWalletInfo.extendedPublicKey) throw new Error("Could not retrieve the extended public key");
 
     // generate the address and public key based on the xpub
     const { address, pubkeyHex, scriptPubKeyHex } = generateP2trAddressFromXpub(
-      this.keystoneWaleltInfo.extendedPublicKey,
+      this.keystoneWalletInfo.extendedPublicKey,
       "M/0/0",
       toNetwork(this.config.network),
     );
-    this.keystoneWaleltInfo.address = address;
-    this.keystoneWaleltInfo.publicKeyHex = pubkeyHex;
-    this.keystoneWaleltInfo.scriptPubKeyHex = scriptPubKeyHex;
+    this.keystoneWalletInfo.address = address;
+    this.keystoneWalletInfo.publicKeyHex = pubkeyHex;
+    this.keystoneWalletInfo.scriptPubKeyHex = scriptPubKeyHex;
+    // TODO remove
+    console.log("current network", this.config.network);
+    console.log("this.keystoneWalletInfo", this.keystoneWalletInfo);
   };
 
   getAddress = async (): Promise<string> => {
-    if (!this.keystoneWaleltInfo?.address) throw new Error("Could not retrieve the address");
+    if (!this.keystoneWalletInfo?.address) throw new Error("Could not retrieve the address");
 
-    return this.keystoneWaleltInfo.address;
+    return this.keystoneWalletInfo.address;
   };
 
   getPublicKeyHex = async (): Promise<string> => {
-    if (!this.keystoneWaleltInfo?.publicKeyHex) throw new Error("Could not retrieve the BTC public key");
+    if (!this.keystoneWalletInfo?.publicKeyHex) throw new Error("Could not retrieve the BTC public key");
 
-    return this.keystoneWaleltInfo.publicKeyHex;
+    return this.keystoneWalletInfo.publicKeyHex;
   };
 
   signPsbt = async (psbtHex: string): Promise<string> => {
-    if (!this.keystoneWaleltInfo?.address || !this.keystoneWaleltInfo?.publicKeyHex) {
+    if (!this.keystoneWalletInfo?.address || !this.keystoneWalletInfo?.publicKeyHex) {
       throw new Error("Keystone Wallet not connected");
     }
     if (!psbtHex) throw new Error("psbt hex is required");
@@ -134,7 +137,7 @@ export class KeystoneProvider implements IBTCProvider {
   };
 
   signPsbts = async (psbtsHexes: string[]): Promise<string[]> => {
-    if (!this.keystoneWaleltInfo?.address || !this.keystoneWaleltInfo?.publicKeyHex) {
+    if (!this.keystoneWalletInfo?.address || !this.keystoneWalletInfo?.publicKeyHex) {
       throw new Error("Keystone Wallet not connected");
     }
     if (!psbtsHexes && !Array.isArray(psbtsHexes)) throw new Error("psbts hexes are required");
@@ -166,14 +169,14 @@ export class KeystoneProvider implements IBTCProvider {
    * @returns signature
    */
   signMessageBIP322 = async (message: string): Promise<string> => {
-    if (!this.keystoneWaleltInfo?.scriptPubKeyHex || !this.keystoneWaleltInfo?.publicKeyHex) {
+    if (!this.keystoneWalletInfo?.scriptPubKeyHex || !this.keystoneWalletInfo?.publicKeyHex) {
       throw new Error("Keystone Wallet not connected");
     }
 
     // Construct the psbt of Bip322 message signing
-    const scriptPubKey = Buffer.from(this.keystoneWaleltInfo.scriptPubKeyHex, "hex");
+    const scriptPubKey = Buffer.from(this.keystoneWalletInfo.scriptPubKeyHex, "hex");
     const toSpendTx = BIP322.buildToSpendTx(message, scriptPubKey);
-    const internalPublicKey = toXOnly(Buffer.from(this.keystoneWaleltInfo.publicKeyHex, "hex"));
+    const internalPublicKey = toXOnly(Buffer.from(this.keystoneWalletInfo.publicKeyHex, "hex"));
     let psbt = BIP322.buildToSignTx(toSpendTx.getId(), scriptPubKey, false, internalPublicKey);
 
     // Set the sighashType to bitcoin.Transaction.SIGHASH_ALL since it defaults to SIGHASH_DEFAULT
@@ -188,7 +191,7 @@ export class KeystoneProvider implements IBTCProvider {
   };
 
   signMessageECDSA = async (message: string): Promise<string> => {
-    if (!this.keystoneWaleltInfo?.address || !this.keystoneWaleltInfo?.publicKeyHex) {
+    if (!this.keystoneWalletInfo?.address || !this.keystoneWalletInfo?.publicKeyHex) {
       throw new Error("Keystone Wallet not connected");
     }
 
@@ -198,9 +201,9 @@ export class KeystoneProvider implements IBTCProvider {
       dataType: KeystoneBitcoinSDK.DataType.message,
       accounts: [
         {
-          path: `${this.keystoneWaleltInfo.path}/0/0`,
-          xfp: `${this.keystoneWaleltInfo.mfp}`,
-          address: this.keystoneWaleltInfo.address,
+          path: `${this.keystoneWalletInfo.path}/0/0`,
+          xfp: `${this.keystoneWalletInfo.mfp}`,
+          address: this.keystoneWalletInfo.address,
         },
       ],
       origin: "babylon staking app",
@@ -264,18 +267,18 @@ export class KeystoneProvider implements IBTCProvider {
    */
   private enhancePsbt = (psbt: Psbt): Psbt => {
     if (
-      !this.keystoneWaleltInfo?.scriptPubKeyHex ||
-      !this.keystoneWaleltInfo?.publicKeyHex ||
-      !this.keystoneWaleltInfo?.mfp ||
-      !this.keystoneWaleltInfo?.path
+      !this.keystoneWalletInfo?.scriptPubKeyHex ||
+      !this.keystoneWalletInfo?.publicKeyHex ||
+      !this.keystoneWalletInfo?.mfp ||
+      !this.keystoneWalletInfo?.path
     ) {
       throw new Error("Keystone Wallet not connected");
     }
 
     const bip32Derivation = {
-      masterFingerprint: Buffer.from(this.keystoneWaleltInfo.mfp, "hex"),
-      path: `${this.keystoneWaleltInfo.path}/0/0`,
-      pubkey: Buffer.from(this.keystoneWaleltInfo.publicKeyHex, "hex"),
+      masterFingerprint: Buffer.from(this.keystoneWalletInfo.mfp, "hex"),
+      path: `${this.keystoneWalletInfo.path}/0/0`,
+      pubkey: Buffer.from(this.keystoneWalletInfo.publicKeyHex, "hex"),
     };
 
     psbt.data.inputs.forEach((input) => {
@@ -283,7 +286,7 @@ export class KeystoneProvider implements IBTCProvider {
         {
           ...bip32Derivation,
           pubkey: toXOnly(bip32Derivation.pubkey),
-          leafHashes: caculateTapLeafHash(input, bip32Derivation.pubkey),
+          leafHashes: calculateTapLeafHash(input, bip32Derivation.pubkey),
         },
       ];
     });
@@ -372,7 +375,7 @@ const generateP2trAddressFromXpub = (
  * @param pubkey - The public key as a Buffer.
  * @returns An array of tap leaf hashes.
  */
-const caculateTapLeafHash = (input: PsbtInput, pubkey: Buffer) => {
+const calculateTapLeafHash = (input: PsbtInput, pubkey: Buffer) => {
   if (input.tapInternalKey && !input.tapLeafScript) {
     return [];
   }
