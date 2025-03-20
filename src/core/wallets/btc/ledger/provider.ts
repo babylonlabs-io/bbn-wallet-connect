@@ -158,6 +158,7 @@ export class LedgerProvider implements IBTCProvider {
       message,
       type,
       isTestnet,
+      derivationPath: this.ledgerWalletInfo.path,
     });
 
     // TODO bip322 does not work
