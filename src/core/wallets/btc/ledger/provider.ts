@@ -5,8 +5,7 @@ import { HDKey } from "@scure/bip32";
 import { Network as BitcoinNetwork, payments } from "bitcoinjs-lib";
 import { toXOnly } from "bitcoinjs-lib/src/psbt/bip371";
 import { Buffer } from "buffer";
-import AppClient, { DefaultWalletPolicy, signPsbt, tryParsePsbt } from "ledger-bitcoin-babylon";
-import { signMessage } from "ledger-bitcoin-babylon/build/main/lib/babylon/index";
+import AppClient, { DefaultWalletPolicy, signMessage, signPsbt, tryParsePsbt } from "ledger-bitcoin-babylon";
 
 import type { BTCConfig, InscriptionIdentifier } from "@/core/types";
 import { IBTCProvider, Network } from "@/core/types";

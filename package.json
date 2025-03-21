@@ -47,8 +47,7 @@
     "@ledgerhq/hw-transport-webusb": "^6.29.4",
     "@tomo-inc/wallet-connect-sdk": "^0.3.13",
     "buffer": "^6.0.3",
-    "ledger-bitcoin": "^0.2.3",
-    "ledger-bitcoin-babylon": "^0.2.2",
+    "ledger-bitcoin-babylon": "^0.2.3",
     "nanoevents": "^9.1.0",
     "usehooks-ts": "^3.0.2",
     "uuid": "^11.1.0"
