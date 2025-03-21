@@ -120,6 +120,11 @@ export class LedgerProvider implements IBTCProvider {
     const transport = this.ledgerWalletInfo.app.transport;
     const policy = await tryParsePsbt(transport, psbtBase64, true);
     const tx = await signPsbt({ transport, psbt: psbtBase64, policy: policy! });
+    console.log("tx", tx);
+    console.log("tx.hex", tx.hex);
+    // TODO try to enhance the psbt first
+    // TODO try tx.toPSBT();
+    // TODO try tx.finalize();
     return tx.hex;
   };
 
